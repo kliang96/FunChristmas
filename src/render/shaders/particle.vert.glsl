@@ -31,5 +31,5 @@ void main() {
       colorTree = vec3(1.0, 0.8, 0.1); 
   }
   
-  vColor = mix(colorRandom, colorTree, targetMix);
+  vColor = mix(colorRandom, colorTree, targetMix) * 3.0;
 }

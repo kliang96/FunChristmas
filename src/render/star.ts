@@ -13,7 +13,7 @@ export class StarSystem {
         // Start from top
         for (let i = 0; i < points * 2; i++) {
             // Angle offset to point upwards
-            const angle = (i * Math.PI) / points - (Math.PI / 2);
+            const angle = (i * Math.PI) / points - (Math.PI / 2) + Math.PI; // Flip 180 degrees to point up
             const r = (i % 2 === 0) ? outerRadius : innerRadius;
             const x = Math.cos(angle) * r;
             const y = Math.sin(angle) * r;

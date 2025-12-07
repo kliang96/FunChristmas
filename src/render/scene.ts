@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { EffectComposer, RenderPass, BloomEffect, EffectPass, SMAAEffect, SMAAPreset } from 'postprocessing';
+import { EffectComposer, RenderPass, EffectPass, SMAAEffect, SMAAPreset, SelectiveBloomEffect } from 'postprocessing';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { ParticleSystem } from './particles';
 import { PresentsSystem } from './presents';
@@ -22,6 +22,8 @@ export class SceneRenderer {
     framesSystem: FramesSystem | undefined;
     starSystem: StarSystem | undefined;
     ornamentsSystem: OrnamentsSystem | undefined;
+
+    bloomEffect: SelectiveBloomEffect;
 
     composer: EffectComposer;
 
@@ -87,13 +89,14 @@ export class SceneRenderer {
         const smaa = new SMAAEffect({ preset: SMAAPreset.HIGH });
         this.composer.addPass(new EffectPass(this.camera, smaa));
 
-        const bloom = new BloomEffect({
-            intensity: 1.5,
-            luminanceThreshold: 0.2,
+        this.bloomEffect = new SelectiveBloomEffect(this.scene, this.camera, {
+            intensity: 2.5,
+            luminanceThreshold: 0.5,
             mipmapBlur: true,
-            radius: 0.7
+            radius: 0.4
         });
-        this.composer.addPass(new EffectPass(this.camera, bloom));
+
+        this.composer.addPass(new EffectPass(this.camera, this.bloomEffect));
 
         window.addEventListener('resize', this.onResize.bind(this));
 
@@ -112,6 +115,11 @@ export class SceneRenderer {
         this.particleSystem = new ParticleSystem(10000);
         this.contentGroup.add(this.particleSystem.mesh);
 
+        // Add particles to bloom
+        if (this.bloomEffect && this.particleSystem.mesh) {
+            this.bloomEffect.selection.add(this.particleSystem.mesh);
+        }
+
         this.presentsSystem = new PresentsSystem();
         this.contentGroup.add(this.presentsSystem.mesh);
         if (this.presentsSystem.ribbonMesh) this.contentGroup.add(this.presentsSystem.ribbonMesh);
@@ -121,6 +129,10 @@ export class SceneRenderer {
 
         this.starSystem = new StarSystem();
         this.contentGroup.add(this.starSystem.mesh);
+        // Add star to bloom
+        if (this.bloomEffect && this.starSystem.mesh) {
+            this.bloomEffect.selection.add(this.starSystem.mesh);
+        }
 
         this.ornamentsSystem = new OrnamentsSystem();
         this.contentGroup.add(this.ornamentsSystem.mesh);
@@ -178,8 +190,8 @@ export class SceneRenderer {
 
         } else if (this.currentMode === 'EXPANDED') {
             // Hand Control Lerp
-            this.currentRotationY = THREE.MathUtils.lerp(this.currentRotationY, this.targetRotationY, delta * 3.0);
-            this.currentRotationX = THREE.MathUtils.lerp(this.currentRotationX, this.targetRotationX, delta * 3.0);
+            this.currentRotationY = THREE.MathUtils.lerp(this.currentRotationY, this.targetRotationY, delta * 2.0);
+            this.currentRotationX = THREE.MathUtils.lerp(this.currentRotationX, this.targetRotationX, delta * 2.0);
 
             const currentZ = this.contentGroup.position.z;
             const newZ = THREE.MathUtils.lerp(currentZ, this.targetZoomZ, delta * 2.0);
@@ -204,7 +216,7 @@ export class SceneRenderer {
         }
 
         if (this.presentsSystem) this.presentsSystem.update(time, this.currentMode);
-        if (this.framesSystem) this.framesSystem.update(time, this.currentMode);
+        if (this.framesSystem) this.framesSystem.update(time, delta, this.currentMode);
         if (this.starSystem) this.starSystem.update(time, this.currentMode);
         if (this.ornamentsSystem) this.ornamentsSystem.update(time, this.currentMode);
 

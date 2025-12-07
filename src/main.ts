@@ -2,6 +2,7 @@ import './style.css'
 import { camera } from './input/camera';
 import { sceneRenderer } from './render/scene';
 import { ui } from './ui/overlay';
+import { debugView } from './ui/debug';
 import { handTracker } from './input/mediapipe';
 import { classifier } from './input/gestures';
 import { stateMachine } from './state/machine';
@@ -84,6 +85,12 @@ function rendererLoop() {
   // Input Processing
   if (camera.videoInput && handTracker.ready) {
     const results = handTracker.detect(camera.videoInput);
+
+    // Debug View
+    if (results) {
+      debugView.update(camera.videoInput, results);
+    }
+
     if (results && results.landmarks && results.landmarks.length > 0) {
       classifier.classify(results);
       lastHandTime = now;

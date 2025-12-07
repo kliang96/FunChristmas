@@ -167,7 +167,7 @@ export class FramesSystem {
         }
     }
 
-    update(time: number, mode: string) {
+    update(time: number, delta: number, mode: string) {
         const visible = (mode === 'EXPANDED' || mode === 'FOCUS');
         const animTargetScale = visible ? 1.0 : 0.0;
 
@@ -180,6 +180,11 @@ export class FramesSystem {
 
         const count = this.activeFrames.length;
         if (count === 0) return;
+
+        // "Slow down the animation... around 1 - 2 full seconds"
+        // Using exponential decay: roughly 99% settled in 4.6 / speed seconds.
+        // Speed = 2.0 => ~2.3 seconds.
+        const lerpSpeed = 2.0;
 
         this.activeFrames.forEach((group, i) => {
             let targetPos = new THREE.Vector3();
@@ -211,10 +216,6 @@ export class FramesSystem {
                 }
             } else if (mode === 'EXPANDED') {
                 scaleMult = 1.0;
-                // Note: Rotation handled by parent Scene group now?
-                // Actually frames are children of scene.framesSystem.group.
-                // If scene rotates 'contentGroup', these positions rotate with it.
-                // We just need to set relative positions.
 
                 const angle = (i / count) * Math.PI * 2 + time * 0.1;
                 const r = 3.0;
@@ -231,11 +232,14 @@ export class FramesSystem {
                 scaleMult = 0.0;
             }
 
-            group.position.lerp(targetPos, 0.05);
-            group.quaternion.slerp(targetRot, 0.1);
+            // Delta-time based lerp
+            const alpha = 1.0 - Math.exp(-lerpSpeed * delta);
+
+            group.position.lerp(targetPos, alpha);
+            group.quaternion.slerp(targetRot, alpha);
 
             const finalScale = animTargetScale * scaleMult;
-            const lerpedScale = THREE.MathUtils.lerp(group.scale.x, finalScale, 0.05);
+            const lerpedScale = THREE.MathUtils.lerp(group.scale.x, finalScale, alpha);
             group.scale.set(lerpedScale, lerpedScale, lerpedScale);
         });
     }
