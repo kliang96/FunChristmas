@@ -8,8 +8,8 @@ export class PhotoLoader {
 
     async loadUserPhotos(): Promise<THREE.Texture[]> {
         // 1. Load Local Photos from src/user_photos via Vite Glob Import
-        // Only match jpg, jpeg, png files (case-insensitive)
-        const modules = import.meta.glob('../user_photos/*.{jpg,jpeg,png,JPG,JPEG,PNG}');
+        // Use eager: true to bundle the paths directly and avoid 100s of tiny network requests
+        const modules = import.meta.glob('../user_photos/*.{jpg,jpeg,png,JPG,JPEG,PNG}', { eager: true });
         const localPromises: Promise<THREE.Texture>[] = [];
 
         console.log(`Found ${Object.keys(modules).length} image files in user_photos`);
@@ -17,7 +17,8 @@ export class PhotoLoader {
         for (const path in modules) {
             localPromises.push(new Promise(async (resolve, reject) => {
                 try {
-                    const mod = await modules[path]() as { default: string };
+                    // With eager: true, the module is already loaded.
+                    const mod = modules[path] as { default: string };
                     const texture = await new THREE.TextureLoader().loadAsync(mod.default);
                     texture.colorSpace = THREE.SRGBColorSpace;
                     console.log(`Loaded: ${path}`);

@@ -158,7 +158,7 @@ export class SceneRenderer {
             // Camera is at +8. Content at 0.
             // Move Content +Z towards camera. Max +2.5 (Reduced from 4.0)
             const maxZoom = 2.5;
-            const minZoom = -2.0;
+
 
             // Map 0..1 to minZoom..maxZoom
             // Let's assume neutral hand is 0.5 -> Z=0

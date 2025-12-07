@@ -107,38 +107,10 @@ export class PresentsSystem {
     }
 
     update(time: number, mode: string) {
-        const visible = (mode === 'EXPANDED' || mode === 'FOCUS');
-        const targetScale = visible ? 1.0 : 0.0;
 
-        for (let i = 0; i < this.count; i++) {
-            // Apply scale lerp in main update loop effectively by just lerping current scale or passed scale
-            // Let's use simple logic: current scale isn't stored easily without reading back matrix.
-            // Just use targetScale for now with a simple transition factor logic if we tracked it, 
-            // but we don't have per-instance state tracking easily in this class structure.
-            // Let's just use targetScale directly for immediate response or implement a global smooth state
 
-            // To be smooth, we need to track current scale.
-            // Let's cheat: we know previous frame's scale was X.
-            // Actually, we can just use the time-based transition from state machine or just lerp a global value?
-            // "Everything expands". The transition is controlled by logical scale.
 
-            // Let's use a simple approach: 
-            // If visible, scale is Math.min(1, (time - transitionStart))? No.
-            // Just usage of Lerp on a stored value for the system.
-            // NOTE: Changing this to direct targetScale for simplicity in this refactor step, 
-            // or we'd need a `currentScale` property on the class.
 
-            // Let's add `currentScale` to class to smooth it.
-        }
-
-        // Re-implement update loop properly
-        const dragging = (mode === 'TREE') ? 0.0 : 1.0; // Simple boolean
-        // We'll rely on the visual pop for now or better yet:
-        // Assume we travel from 0 to 1 over time?
-        // Actually SceneRenderer passes `time`.
-
-        // Just Use targetScale. The flicker might happen? 
-        // Let's implement a smooth scaler.
         this.animate(time, mode);
 
         this.mesh.instanceMatrix.needsUpdate = true;

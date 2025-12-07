@@ -136,4 +136,34 @@ function rendererLoop() {
   ui.updateFPS(1000 / 60);
 }
 
-init();
+// 7. Password Logic
+const passwordOverlay = document.getElementById('password-overlay');
+const passwordInput = document.getElementById('password-input') as HTMLInputElement;
+const passwordSubmit = document.getElementById('password-submit');
+const passwordError = document.getElementById('password-error');
+
+function checkPassword() {
+  const password = passwordInput.value;
+  // Simple check - in a real app use hashing
+  if (password === 'merryxmas' || password === 'MerryXmas') {
+    if (passwordOverlay) passwordOverlay.style.display = 'none';
+    init();
+  } else {
+    if (passwordError) passwordError.style.display = 'block';
+    // Shake animation
+    if (passwordInput) {
+      passwordInput.style.transform = 'translateX(10px)';
+      setTimeout(() => passwordInput.style.transform = 'translateX(0)', 100);
+      setTimeout(() => passwordInput.style.transform = 'translateX(-10px)', 200);
+      setTimeout(() => passwordInput.style.transform = 'translateX(0)', 300);
+    }
+  }
+}
+
+passwordSubmit?.addEventListener('click', checkPassword);
+passwordInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') checkPassword();
+});
+
+// Force focus
+passwordInput?.focus();

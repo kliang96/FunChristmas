@@ -8,6 +8,14 @@
   </head>
   <body>
     <div id="app"></div>
+    <div id="password-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
+      <h1 style="margin-bottom: 2rem; color: gold;">🎄 Merry Christmas 🎄</h1>
+      <div style="display: flex; gap: 10px;">
+        <input type="password" id="password-input" placeholder="Enter Password" style="padding: 10px; font-size: 1.2rem; border-radius: 5px; border: none;">
+        <button id="password-submit" style="padding: 10px 20px; font-size: 1.2rem; background: #e63946; color: white; border: none; border-radius: 5px; cursor: pointer;">Open</button>
+      </div>
+      <p id="password-error" style="color: #ff6b6b; margin-top: 1rem; display: none;">Incorrect Password</p>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
