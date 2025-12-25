@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Generate Cat Sprite</title>
+</head>
+
+<body>
+    <canvas id="canvas" width="512" height="512"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Clear canvas with transparency
+        ctx.clearRect(0, 0, 512, 512);
+
+        // Draw a simple stylized sitting cat silhouette
+        ctx.fillStyle = '#F5F5F5'; // Off-white color
+
+        // Body (rounded rectangle)
+        ctx.beginPath();
+        ctx.ellipse(256, 350, 100, 120, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Head (circle)
+        ctx.beginPath();
+        ctx.arc(256, 220, 80, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Left ear
+        ctx.beginPath();
+        ctx.moveTo(200, 180);
+        ctx.lineTo(180, 120);
+        ctx.lineTo(220, 160);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right ear
+        ctx.beginPath();
+        ctx.moveTo(312, 180);
+        ctx.lineTo(332, 120);
+        ctx.lineTo(292, 160);
+        ctx.closePath();
+        ctx.fill();
+
+        // Ear inner (gray/brown)
+        ctx.fillStyle = '#A89080';
+        ctx.beginPath();
+        ctx.moveTo(205, 175);
+        ctx.lineTo(195, 135);
+        ctx.lineTo(215, 165);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(307, 175);
+        ctx.lineTo(317, 135);
+        ctx.lineTo(297, 165);
+        ctx.closePath();
+        ctx.fill();
+
+        // Tail (curved)
+        ctx.fillStyle = '#F5F5F5';
+        ctx.beginPath();
+        ctx.ellipse(180, 400, 40, 80, -0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Face features
+        // Eyes
+        ctx.fillStyle = '#4A90E2';
+        ctx.beginPath();
+        ctx.arc(230, 210, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(282, 210, 12, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Pupils
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.arc(230, 210, 6, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(282, 210, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Nose
+        ctx.fillStyle = '#FFB6C1';
+        ctx.beginPath();
+        ctx.moveTo(256, 240);
+        ctx.lineTo(250, 250);
+        ctx.lineTo(262, 250);
+        ctx.closePath();
+        ctx.fill();
+
+        // Whiskers
+        ctx.strokeStyle = '#888888';
+        ctx.lineWidth = 2;
+
+        // Left whiskers
+        ctx.beginPath();
+        ctx.moveTo(220, 235);
+        ctx.lineTo(160, 230);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(220, 245);
+        ctx.lineTo(160, 250);
+        ctx.stroke();
+
+        // Right whiskers
+        ctx.beginPath();
+        ctx.moveTo(292, 235);
+        ctx.lineTo(352, 230);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(292, 245);
+        ctx.lineTo(352, 250);
+        ctx.stroke();
+
+        // Download the image
+        canvas.toBlob(function (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'ragdoll_cat_sprite.png';
+            a.click();
+        }, 'image/png');
+
+        document.body.appendChild(document.createTextNode('Cat sprite generated! Check your downloads.'));
+    </script>
+</body>
+
+</html>

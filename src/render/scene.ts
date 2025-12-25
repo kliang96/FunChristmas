@@ -6,6 +6,8 @@ import { PresentsSystem } from './presents';
 import { FramesSystem } from './frames';
 import { StarSystem } from './star';
 import { OrnamentsSystem } from './ornaments';
+import { SnowSystem } from './snow';
+import { CatSystem } from './cat';
 
 export class SceneRenderer {
     scene: THREE.Scene;
@@ -22,6 +24,8 @@ export class SceneRenderer {
     framesSystem: FramesSystem | undefined;
     starSystem: StarSystem | undefined;
     ornamentsSystem: OrnamentsSystem | undefined;
+    snowSystem: SnowSystem | undefined;
+    catSystem: CatSystem | undefined;
 
     bloomEffect: SelectiveBloomEffect;
 
@@ -136,6 +140,17 @@ export class SceneRenderer {
 
         this.ornamentsSystem = new OrnamentsSystem();
         this.contentGroup.add(this.ornamentsSystem.mesh);
+        // Add ornaments to bloom
+        if (this.bloomEffect && this.ornamentsSystem.mesh) {
+            this.bloomEffect.selection.add(this.ornamentsSystem.mesh);
+        }
+
+        // Add snow to main scene
+        this.snowSystem = new SnowSystem(500);
+        this.scene.add(this.snowSystem.mesh);
+        // Add cat
+        this.catSystem = new CatSystem();
+        this.scene.add(this.catSystem.sprite);
     }
 
     // Updates called from Main loop with hand data
@@ -171,6 +186,10 @@ export class SceneRenderer {
         this.currentMode = mode;
         if (mode === 'TREE') {
             // Reset transforms logic
+        }
+
+        if (mode === 'EXPANDED' && this.particleSystem) {
+            this.particleSystem.triggerBurst();
         }
     }
 
@@ -219,6 +238,8 @@ export class SceneRenderer {
         if (this.framesSystem) this.framesSystem.update(time, delta, this.currentMode);
         if (this.starSystem) this.starSystem.update(time, this.currentMode);
         if (this.ornamentsSystem) this.ornamentsSystem.update(time, this.currentMode);
+        if (this.snowSystem) this.snowSystem.update(time);
+        if (this.catSystem) this.catSystem.update(time, this.currentMode);
 
         this.composer.render();
     }

@@ -1,4 +1,4 @@
-export type AppMode = 'TREE' | 'EXPANDED' | 'FOCUS';
+export type AppMode = 'TREE' | 'EXPANDED' | 'FOCUS' | 'LOADING';
 
 class AppStateMachine {
     currentMode: AppMode = 'TREE';

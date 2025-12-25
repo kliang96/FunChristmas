@@ -6,6 +6,81 @@ import { debugView } from './ui/debug';
 import { handTracker } from './input/mediapipe';
 import { classifier } from './input/gestures';
 import { stateMachine } from './state/machine';
+import * as THREE from 'three';
+
+// --- Loading State Management ---
+const loadingState = {
+  isComplete: false,
+  progress: 0,
+  total: 0,
+  loadedTextures: [] as THREE.Texture[],
+  statusText: "Initializing..."
+};
+
+const loadingStatusEl = document.getElementById('loading-status');
+const passwordSubmitBtn = document.getElementById('password-submit') as HTMLButtonElement;
+const passwordInputEl = document.getElementById('password-input') as HTMLInputElement;
+const passwordOverlay = document.getElementById('password-overlay');
+const passwordError = document.getElementById('password-error');
+
+
+// Background Loading Logic
+async function startBackgroundLoad() {
+  console.log("Starting background loading...");
+  try {
+    const { photoLoader } = await import('./photos/loader');
+
+    // 1. Load Images
+    loadingState.statusText = "Downloading photos...";
+    updateLoadingUI();
+
+    const textures = await photoLoader.loadUserPhotos();
+    loadingState.total = textures.length;
+    loadingState.loadedTextures = textures;
+
+    // 2. Upload to GPU incrementally
+    if (sceneRenderer.renderer) {
+      console.log(`Background uploading ${textures.length} textures to GPU...`);
+
+      for (let i = 0; i < textures.length; i++) {
+        const tex = textures[i];
+        sceneRenderer.renderer.initTexture(tex);
+        loadingState.progress = i + 1;
+        updateLoadingUI();
+
+        // Yield to main thread every few textures to keep UI responsive
+        if (i % 2 === 0) await new Promise(r => requestAnimationFrame(r));
+      }
+    }
+
+    loadingState.statusText = "Ready!";
+    loadingState.isComplete = true;
+    updateLoadingUI();
+
+    // COMPLETE:
+    finishLoadingTransition();
+
+  } catch (e) {
+    console.error("Background load failed:", e);
+    loadingState.statusText = "Error loading content.";
+    updateLoadingUI();
+  }
+}
+
+function updateLoadingUI() {
+  if (!loadingStatusEl) return;
+  const pct = loadingState.total > 0
+    ? Math.round((loadingState.progress / loadingState.total) * 100)
+    : 0;
+
+  if (loadingState.statusText === "Downloading photos...") {
+    loadingStatusEl.innerText = "Downloading...";
+  } else {
+    loadingStatusEl.innerText = `Preparing Christmas Magic... ${pct}%`;
+  }
+}
+
+// NOTE: We do NOT auto-start loading anymore.
 
 async function init() {
   ui.setMode('INITIALIZING');
@@ -20,17 +95,8 @@ async function init() {
     ui.setMode('DEMO MODE');
   }
 
-  // 2. Setup Scene
-  // sceneRenderer.setupParticles is called in constructor
-
-  // Auto-load photos
-  import('./photos/loader').then(async ({ photoLoader }) => {
-    const textures = await photoLoader.loadUserPhotos();
-    if (sceneRenderer.framesSystem) {
-      sceneRenderer.framesSystem.setTextures(textures);
-      console.log("Auto-loaded user photos");
-    }
-  });
+  // 2. Setup Scene - Apply loaded textures
+  // (Textures apply later)
 
   // 3. State Machine Listeners
   stateMachine.onTransition((mode) => {
@@ -40,13 +106,17 @@ async function init() {
 
   // 4. Gesture Listener
   classifier.onGesture = (gesture) => {
-    if (gesture === 'FIST') stateMachine.transitionTo('TREE');
-    if (gesture === 'OPEN') stateMachine.transitionTo('EXPANDED');
-    if (gesture === 'PINCH') stateMachine.transitionTo('FOCUS');
+    // Only allow gestures if fully loaded
+    if (loadingState.isComplete) {
+      if (gesture === 'FIST') stateMachine.transitionTo('TREE');
+      if (gesture === 'OPEN') stateMachine.transitionTo('EXPANDED');
+      if (gesture === 'PINCH') stateMachine.transitionTo('FOCUS');
+    }
   };
 
   // 5. Keyboard Fallbacks
   window.addEventListener('keydown', (e) => {
+    if (!loadingState.isComplete) return;
     if (e.key === 'f' || e.key === 'F') stateMachine.transitionTo('TREE');
     if (e.key === 'o' || e.key === 'O') stateMachine.transitionTo('EXPANDED');
     if (e.key === 'p' || e.key === 'P') stateMachine.transitionTo('FOCUS');
@@ -70,12 +140,15 @@ async function init() {
     audioManager.play();
   }, { once: true });
 
-  stateMachine.transitionTo('TREE');
+  // IMPORTANT: Start in LOADING mode
+  stateMachine.transitionTo('LOADING');
 
   rendererLoop();
 }
 
 let lastHandTime = 0;
+let lastFrameTime = performance.now();
+let fpsRolling = 60;
 
 function rendererLoop() {
   requestAnimationFrame(rendererLoop);
@@ -123,7 +196,8 @@ function rendererLoop() {
 
     } else {
       // Hand Lost Logic
-      if (now - lastHandTime > 10000 && stateMachine.currentMode !== 'TREE') {
+      // Only auto-reset if fully loaded
+      if (loadingState.isComplete && now - lastHandTime > 10000 && stateMachine.currentMode !== 'TREE') {
         stateMachine.transitionTo('TREE');
         lastHandTime = now;
       }
@@ -132,38 +206,93 @@ function rendererLoop() {
 
   sceneRenderer.render();
 
-  // Mock FPS (later real)
-  ui.updateFPS(1000 / 60);
+  // Calculate Real FPS
+  const frameDelta = now - lastFrameTime;
+  lastFrameTime = now;
+  if (frameDelta > 0) {
+    const currentFps = 1000 / frameDelta;
+    fpsRolling = fpsRolling * 0.95 + currentFps * 0.05; // Smooth rolling average
+  }
+  ui.updateFPS(fpsRolling);
 }
 
-// 7. Password Logic
-const passwordOverlay = document.getElementById('password-overlay');
-const passwordInput = document.getElementById('password-input') as HTMLInputElement;
-const passwordSubmit = document.getElementById('password-submit');
-const passwordError = document.getElementById('password-error');
+
+// --- Password & UI Logic ---
+
+let hasLoggedIn = false;
 
 function checkPassword() {
-  const password = passwordInput.value;
+  if (hasLoggedIn) return;
+  const password = passwordInputEl.value;
   // Simple check - in a real app use hashing
-  if (password === 'merryxmas' || password === 'MerryXmas') {
-    if (passwordOverlay) passwordOverlay.style.display = 'none';
-    init();
+  if (password === 'kibbles') {
+    if (passwordError) passwordError.style.display = 'none';
+    hasLoggedIn = true;
+
+    // 1. Hide Input Form UI, Show Status
+    passwordInputEl.style.display = 'none';
+    passwordSubmitBtn.style.display = 'none';
+    if (loadingStatusEl) loadingStatusEl.style.display = 'block';
+
+    // 2. Initialize Scene (showing Particles in LOADING mode)
+    init().then(() => {
+      // 3. Start Loading Assets
+      startBackgroundLoad();
+    });
+
   } else {
     if (passwordError) passwordError.style.display = 'block';
     // Shake animation
-    if (passwordInput) {
-      passwordInput.style.transform = 'translateX(10px)';
-      setTimeout(() => passwordInput.style.transform = 'translateX(0)', 100);
-      setTimeout(() => passwordInput.style.transform = 'translateX(-10px)', 200);
-      setTimeout(() => passwordInput.style.transform = 'translateX(0)', 300);
+    if (passwordInputEl) {
+      passwordInputEl.style.transform = 'translateX(10px)';
+      setTimeout(() => passwordInputEl.style.transform = 'translateX(0)', 100);
+      setTimeout(() => passwordInputEl.style.transform = 'translateX(-10px)', 200);
+      setTimeout(() => passwordInputEl.style.transform = 'translateX(0)', 300);
     }
   }
 }
 
-passwordSubmit?.addEventListener('click', checkPassword);
-passwordInput?.addEventListener('keydown', (e) => {
+function finishLoadingTransition() {
+  // 4. DONE -> Transition
+
+  // Apply Textures
+  if (sceneRenderer.framesSystem) {
+    sceneRenderer.framesSystem.setTextures(loadingState.loadedTextures);
+  }
+
+  // Fade out status text
+  if (loadingStatusEl) {
+    loadingStatusEl.style.transition = 'opacity 1.0s';
+    loadingStatusEl.style.opacity = '0';
+  }
+  const h1 = document.querySelector('h1') as HTMLElement;
+  if (h1) {
+    h1.style.transition = 'opacity 1.0s';
+    h1.style.opacity = '0';
+  }
+
+  // Fade out overlay background THEN trigger tree
+  if (passwordOverlay) {
+    passwordOverlay.style.transition = 'background-color 2.0s ease-out';
+    passwordOverlay.style.background = 'transparent'; // Let the particles show through clearer
+
+    // Wait for overlay fade to trigger dramatic entrance of tree
+    setTimeout(() => {
+      // Hide overlay completely logic
+      passwordOverlay.style.display = 'none';
+
+      // Trigger Dramatic Entrance
+      stateMachine.transitionTo('TREE');
+    }, 500);
+  } else {
+    stateMachine.transitionTo('TREE');
+  }
+}
+
+passwordSubmitBtn?.addEventListener('click', checkPassword);
+passwordInputEl?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') checkPassword();
 });
 
 // Force focus
-passwordInput?.focus();
+passwordInputEl?.focus();

@@ -1,0 +1,17 @@
+// INSTRUCTIONS: Add these code snippets to src/render/scene.ts
+
+// 1. In setupScenes() method, add this AFTER line 142 (after ornamentsSystem):
+
+        // Add snow to main scene (not contentGroup) so it doesn't rotate with the tree
+        this.snowSystem = new SnowSystem(500);
+        this.scene.add(this.snowSystem.mesh);
+
+        // Add cat to main scene (not contentGroup) so it doesn't rotate with the tree
+        this.catSystem = new CatSystem();
+        this.scene.add(this.catSystem.sprite);
+        if (this.catSystem.debugFrame) this.scene.add(this.catSystem.debugFrame);
+
+// 2. In render() method, add this AFTER line 225 (after ornamentsSystem.update):
+
+        if (this.snowSystem) this.snowSystem.update(time);
+        if (this.catSystem) this.catSystem.update(time, this.currentMode);

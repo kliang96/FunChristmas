@@ -1,21 +1,29 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>christmas-art</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <div id="password-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: sans-serif;">
-      <h1 style="margin-bottom: 2rem; color: gold;">🎄 Merry Christmas 🎄</h1>
-      <div style="display: flex; gap: 10px;">
-        <input type="password" id="password-input" placeholder="Enter Password" style="padding: 10px; font-size: 1.2rem; border-radius: 5px; border: none;">
-        <button id="password-submit" style="padding: 10px 20px; font-size: 1.2rem; background: #e63946; color: white; border: none; border-radius: 5px; cursor: pointer;">Open</button>
-      </div>
-      <p id="password-error" style="color: #ff6b6b; margin-top: 1rem; display: none;">Incorrect Password</p>
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎄</text></svg>" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+  <title>Dooloo and Kevin's Megaproject</title>
+</head>
+
+<body>
+  <div id="app"></div>
+  <div id="password-overlay" class="overlay">
+    <h1 class="title">🎄 Dooloo and Kevin's Megaproject 🎄</h1>
+    <div class="input-group">
+      <input type="password" id="password-input" placeholder="Enter Password">
+      <button id="password-submit">Open</button>
     </div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+    <p id="password-error" class="error">Incorrect Password</p>
+    <p id="loading-status" class="status">Preparing Christmas Magic... 0%</p>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+
 </html>

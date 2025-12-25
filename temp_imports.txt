@@ -1,0 +1,10 @@
+import * as THREE from 'three';
+import { EffectComposer, RenderPass, EffectPass, SMAAEffect, SMAAPreset, SelectiveBloomEffect } from 'postprocessing';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { ParticleSystem } from './particles';
+import { PresentsSystem } from './presents';
+import { FramesSystem } from './frames';
+import { StarSystem } from './star';
+import { OrnamentsSystem } from './ornaments';
+import { SnowSystem } from './snow';
+import { CatSystem } from './cat';
